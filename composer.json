@@ -38,12 +38,6 @@
             "tests/"
         ]
     },
-    "repositories": [
-        {
-            "type": "path",
-            "url": "../laravel-roles-permissions"
-        }
-    ],
     "extra": {
         "laravel": {
             "providers": [
