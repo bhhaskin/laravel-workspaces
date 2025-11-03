@@ -4,8 +4,13 @@ declare(strict_types=1);
 
 namespace Bhhaskin\LaravelWorkspaces;
 
+use Bhhaskin\LaravelWorkspaces\Models\Workspace;
+use Bhhaskin\LaravelWorkspaces\Models\WorkspaceInvitation;
+use Bhhaskin\LaravelWorkspaces\Policies\WorkspaceInvitationPolicy;
+use Bhhaskin\LaravelWorkspaces\Policies\WorkspacePolicy;
 use Bhhaskin\LaravelWorkspaces\Support\WorkspaceAuthorization;
 use Bhhaskin\LaravelWorkspaces\Support\WorkspaceRoles;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
 class LaravelWorkspacesServiceProvider extends ServiceProvider
@@ -33,6 +38,7 @@ class LaravelWorkspacesServiceProvider extends ServiceProvider
 
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
 
+        $this->registerPolicies();
         WorkspaceRoles::ensureDefaultRoles();
         WorkspaceAuthorization::registerGates();
     }
@@ -44,5 +50,11 @@ class LaravelWorkspacesServiceProvider extends ServiceProvider
         return is_string($configuredPath) && $configuredPath !== ''
             ? $configuredPath
             : config_path('workspaces.php');
+    }
+
+    protected function registerPolicies(): void
+    {
+        Gate::policy(Workspace::class, WorkspacePolicy::class);
+        Gate::policy(WorkspaceInvitation::class, WorkspaceInvitationPolicy::class);
     }
 }

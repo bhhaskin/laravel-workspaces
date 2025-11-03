@@ -30,6 +30,11 @@ class WorkspaceInvitation extends Model
         'deleted_at' => 'immutable_datetime',
     ];
 
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
+    }
+
     public function getTable()
     {
         return config('workspaces.tables.workspace_invitations', parent::getTable());
