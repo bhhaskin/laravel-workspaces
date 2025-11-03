@@ -33,6 +33,11 @@ class Workspace extends Model
         'meta' => 'array',
     ];
 
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
+    }
+
     public function getTable()
     {
         return config('workspaces.tables.workspaces', parent::getTable());

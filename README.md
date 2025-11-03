@@ -159,6 +159,21 @@ if (Gate::forUser($user)->allows('workspace.manage-members', $workspace)) {
 Gate::authorize('workspace.edit-content', $workspace);
 ```
 
+## API Routes
+
+The package ships with controllers, form requests, resources, and policies so you can expose workspace management over HTTP. Routes are not loaded automatically—call the route registrar from your application's route files so you can decide middleware and prefixes:
+
+```php
+use Bhhaskin\LaravelWorkspaces\Routes\Workspaces;
+
+Route::middleware(['auth:sanctum'])
+    ->group(function () {
+        Workspaces::register(); // Registers /workspaces, membership, and invitation endpoints
+    });
+```
+
+Available endpoints include workspace CRUD operations, membership management, and invitation flows (accept/decline requires authentication so the invitation can be matched to the acting user). Use the `include` query string (`?include=members,invitations`) when you need expanded relationships in responses. Routes honour the package policies as well as the workspace ability map defined in your configuration.
+
 Roles listed under `workspaces.roles.auto_create` are ensured during boot, and you can extend the ability map to fit your domain.
 
 ### Events
