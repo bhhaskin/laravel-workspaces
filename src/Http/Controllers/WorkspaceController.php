@@ -57,12 +57,14 @@ class WorkspaceController extends Controller
         $user = $this->resolveUserModel($request->user());
         $data = $request->validated();
 
-        $workspace = Workspace::query()->create([
+        $workspace = new Workspace([
             'name' => $data['name'],
             'slug' => $data['slug'] ?? null,
             'meta' => $data['meta'] ?? null,
-            'owner_id' => $user?->getKey(),
         ]);
+
+        $workspace->owner_id = $user?->getKey();
+        $workspace->save();
 
         if ($user) {
             $workspace->addMember($user);

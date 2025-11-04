@@ -273,8 +273,15 @@ it('transfers ownership and updates roles', function () {
     $workspace->addMember($owner);
     $workspace->addMember($newOwner, 'workspace-editor');
 
+    $ownerId = $owner->id;
+    $newOwnerId = $newOwner->id;
+
     $workspace->transferOwnership($newOwner);
-    $workspace->refresh();
+
+    // Get completely fresh instances from database
+    $workspace = Workspace::find($workspace->id);
+    $owner = User::find($ownerId);
+    $newOwner = User::find($newOwnerId);
 
     expect($workspace->owner_id)->toBe($newOwner->id);
 

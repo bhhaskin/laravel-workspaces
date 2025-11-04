@@ -20,7 +20,12 @@ class WorkspaceInvitation extends Model
 {
     use SoftDeletes;
 
-    protected $guarded = [];
+    protected $fillable = [
+        'email',
+        'role_id',
+        'token',
+        'expires_at',
+    ];
 
     protected $casts = [
         'uuid' => 'string',

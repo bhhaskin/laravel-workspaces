@@ -47,8 +47,7 @@ class WorkspacePolicy
             return true;
         }
 
-        return WorkspaceAuthorization::allows($model, $workspace, 'manage-members')
-            || WorkspaceAuthorization::allows($model, $workspace, 'transfer-ownership');
+        return WorkspaceAuthorization::allows($model, $workspace, 'update');
     }
 
     public function delete(Authenticatable $user, Workspace $workspace): bool

@@ -105,6 +105,9 @@ return [
         'view' => [
             'roles' => '*',
         ],
+        'update' => [
+            'roles' => ['workspace-owner', 'workspace-editor'],
+        ],
         'manage-members' => [
             'roles' => ['workspace-owner'],
         ],

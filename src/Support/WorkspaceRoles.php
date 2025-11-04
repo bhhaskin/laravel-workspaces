@@ -96,9 +96,14 @@ final class WorkspaceRoles
         if (static::objectPermissionsEnabled() && method_exists($relation, 'wherePivot')) {
             [$typeColumn, $idColumn] = static::objectColumns();
 
-            $relation->wherePivot($typeColumn, $workspace->getMorphClass())
-                ->wherePivot($idColumn, $workspace->getKey())
-                ->detach();
+            // Detach each role ID with the workspace scope
+            foreach ($roleIds as $roleId) {
+                $relation->newPivotQuery()
+                    ->where($typeColumn, $workspace->getMorphClass())
+                    ->where($idColumn, $workspace->getKey())
+                    ->where($user->roles()->getRelatedPivotKeyName(), $roleId)
+                    ->delete();
+            }
 
             return;
         }

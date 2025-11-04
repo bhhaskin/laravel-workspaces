@@ -56,6 +56,12 @@ class WorkspaceMemberController extends Controller
         $user = $this->resolveUserByKey($member);
         $data = $request->validated();
 
+        if ($workspace->isOwner($user)) {
+            throw ValidationException::withMessages([
+                'user_id' => ['Cannot change the workspace owner\'s role. Transfer ownership first.'],
+            ]);
+        }
+
         $workspace->updateMemberRole($user, $data['role']);
 
         $record = $workspace->membersIncludingRemoved()->whereKey($user->getKey())->firstOrFail();
