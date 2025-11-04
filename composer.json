@@ -1,7 +1,7 @@
 {
     "name": "bhhaskin/laravel-workspaces",
     "description": "Workspace and team management for Laravel applications with invitations and model mapping.",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "type": "library",
     "license": "MIT",
     "authors": [
@@ -19,29 +19,27 @@
     "require-dev": {
         "orchestra/testbench": "^8.0",
         "pestphp/pest": "^2.0",
-        "phpunit/phpunit": "^10.5"
+        "phpunit/phpunit": "^10.5",
+        "bhhaskin/laravel-billing": "^0.1.0"
     },
     "autoload": {
         "psr-4": {
-            "Bhhaskin\\\\LaravelWorkspaces\\\\": "src/"
-        },
-        "classmap": [
-            "src/"
-        ]
+            "Bhhaskin\\LaravelWorkspaces\\": "src/"
+        }
     },
     "autoload-dev": {
         "psr-4": {
-            "Bhhaskin\\\\LaravelWorkspaces\\\\Tests\\\\": "tests/",
-            "Workbench\\\\App\\\\": "workbench/app/"
-        },
-        "classmap": [
-            "tests/"
-        ]
+            "Bhhaskin\\LaravelWorkspaces\\Tests\\": "tests/",
+            "Workbench\\App\\": "workbench/app/"
+        }
+    },
+    "suggest": {
+        "bhhaskin/laravel-billing": "Enable workspace-level billing and subscription management"
     },
     "extra": {
         "laravel": {
             "providers": [
-                "Bhhaskin\\\\LaravelWorkspaces\\\\LaravelWorkspacesServiceProvider"
+                "Bhhaskin\\LaravelWorkspaces\\LaravelWorkspacesServiceProvider"
             ]
         }
     },
