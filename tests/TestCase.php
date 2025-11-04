@@ -17,10 +17,17 @@ abstract class TestCase extends OrchestraTestCase
 
     protected function getPackageProviders($app): array
     {
-        return [
+        $providers = [
             RolesPermissionsServiceProvider::class,
             LaravelWorkspacesServiceProvider::class,
         ];
+
+        // Add billing provider if available
+        if (class_exists(\Bhhaskin\Billing\BillingServiceProvider::class)) {
+            $providers[] = \Bhhaskin\Billing\BillingServiceProvider::class;
+        }
+
+        return $providers;
     }
 
     protected function defineEnvironment($app): void
@@ -76,11 +83,23 @@ abstract class TestCase extends OrchestraTestCase
                 'roles' => ['workspace-editor'],
             ],
         ]);
+
+        // Configure billing if available
+        if (class_exists(\Bhhaskin\Billing\BillingServiceProvider::class)) {
+            $app['config']->set('billing.billable_model', \Bhhaskin\LaravelWorkspaces\Tests\Fixtures\User::class);
+            $app['config']->set('billing.workspace_model', Workspace::class);
+        }
     }
 
     protected function defineDatabaseMigrations(): void
     {
         $this->loadMigrationsFrom(__DIR__.'/../vendor/bhhaskin/laravel-roles-permissions/database/migrations');
+
+        // Load billing migrations if available
+        if (class_exists(\Bhhaskin\Billing\BillingServiceProvider::class)) {
+            $this->loadMigrationsFrom(__DIR__.'/../vendor/bhhaskin/laravel-billing/database/migrations');
+        }
+
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
         $this->loadMigrationsFrom(__DIR__.'/database/migrations');
 

@@ -10,6 +10,7 @@ This package adds models, migrations, and traits that help you:
 - Attach workspaces to any other model in your application (pages, posts, etc.).
 - Transfer ownership, remove members, and keep a soft-delete history of memberships and invitations.
 - Reference every workspace, membership, invitation, and assignment via stable UUIDs for frontend APIs.
+- **Optional**: Integrate workspace-level billing and subscription management with [`bhhaskin/laravel-billing`](https://github.com/bhhaskin/laravel-billing).
 
 ## Installation
 
@@ -199,6 +200,173 @@ The published `config/workspaces.php` file lets you adjust:
 - Role scope, aliases, owner fallback behaviour, and which roles should be auto-created for workspaces.
 - Ability-to-role mappings (registered automatically as `workspace.*` gates).
 - Invitation expiration window.
+
+## Billing Integration (Optional)
+
+Add workspace-level billing and subscription management by installing the optional billing package:
+
+```bash
+composer require bhhaskin/laravel-billing
+```
+
+### Setup Billing
+
+1. **Publish billing configuration and migrations:**
+
+```bash
+php artisan vendor:publish --tag=billing-config
+php artisan vendor:publish --tag=billing-migrations
+php artisan migrate
+```
+
+2. **Add the `WorkspaceBillable` trait to your Workspace model:**
+
+```php
+use Bhhaskin\LaravelWorkspaces\Models\Workspace as BaseWorkspace;
+use Bhhaskin\LaravelWorkspaces\Traits\WorkspaceBillable;
+
+class Workspace extends BaseWorkspace
+{
+    use WorkspaceBillable;
+}
+```
+
+3. **Add the `Billable` trait to your User model:**
+
+```php
+use Bhhaskin\Billing\Concerns\Billable;
+use Bhhaskin\LaravelWorkspaces\Traits\HasWorkspaces;
+use Bhhaskin\RolesPermissions\Traits\HasRoles;
+
+class User extends Authenticatable
+{
+    use Billable, HasRoles, HasWorkspaces;
+}
+```
+
+### Billing Contact
+
+Designate a workspace member to handle billing (defaults to owner):
+
+```php
+// Set a billing contact (must be a workspace member)
+$workspace->addMember($financeUser);
+$workspace->setBillingContact($financeUser);
+
+// Get billing contact (falls back to owner if not set)
+$contact = $workspace->billingContact();
+
+// Clear billing contact (reverts to owner)
+$workspace->setBillingContact(null);
+```
+
+### Workspace Subscriptions
+
+Subscribe workspaces to plans and track usage:
+
+```php
+// Create a plan in your application
+$plan = Plan::create([
+    'name' => 'Professional Hosting',
+    'slug' => 'pro-hosting',
+    'price' => 49.99,
+    'interval' => 'monthly',
+    'limits' => [
+        'sites' => 10,
+        'storage_gb' => 100,
+        'bandwidth_gb' => 1000,
+    ],
+    'features' => ['ssl_certificates', 'daily_backups', 'cdn'],
+]);
+
+// Subscribe workspace (billing contact gets charged)
+$subscription = $workspace->subscribe($plan);
+
+// Check subscription status
+if ($workspace->hasActiveSubscription()) {
+    // Workspace has active billing
+}
+
+if ($workspace->subscribedToPlan($plan)) {
+    // Workspace has this specific plan
+}
+```
+
+### Quota Management
+
+Track usage against plan limits:
+
+```php
+// Get plan limits
+$siteLimit = $workspace->getLimit('sites'); // 10
+$storageLimit = $workspace->getLimit('storage_gb'); // 100
+
+// Check features
+if ($workspace->hasFeature('ssl_certificates')) {
+    // Enable SSL for workspace sites
+}
+
+// Record usage when creating resources
+$site = Site::create(['workspace_id' => $workspace->id, ...]);
+$workspace->recordUsage('sites', 1);
+
+// Check remaining quota before allowing actions
+if ($workspace->getRemainingQuota('sites') > 0) {
+    // User can create more sites
+} else {
+    // Show upgrade prompt
+}
+
+// Check if over quota
+if ($workspace->isOverQuota('storage_gb')) {
+    // Prevent new uploads
+}
+
+// Get usage percentage
+$percentage = $workspace->getQuotaPercentage('sites'); // e.g., 40.0
+
+// Decrement usage when deleting resources
+$workspace->decrementUsage('sites', 1);
+```
+
+**Example: Web Hosting Platform**
+
+```php
+// Workspace for hosting multiple websites
+$workspace = Workspace::create([
+    'name' => 'ACME Corporation Sites',
+    'owner_id' => $owner->id,
+]);
+
+// Delegate billing to finance team
+$workspace->addMember($financeUser);
+$workspace->setBillingContact($financeUser);
+
+// Subscribe to hosting plan
+$workspace->subscribe($proHostingPlan);
+
+// Check limits before creating site
+if ($workspace->getRemainingQuota('sites') > 0) {
+    $site = Site::create([
+        'workspace_id' => $workspace->id,
+        'domain' => 'example.com',
+    ]);
+    $workspace->recordUsage('sites', 1);
+} else {
+    return redirect()->back()->with('error', 'Site limit reached. Please upgrade.');
+}
+
+// Track storage usage
+$totalStorage = $workspace->sites()->sum('storage_mb');
+$workspace->setUsage('storage_gb', $totalStorage / 1024);
+
+// Prevent uploads if over quota
+if ($workspace->isOverQuota('storage_gb')) {
+    throw new StorageQuotaExceededException();
+}
+```
+
+For more details on billing features, see the [`bhhaskin/laravel-billing`](https://github.com/bhhaskin/laravel-billing) documentation.
 
 ## Testing & Extending
 

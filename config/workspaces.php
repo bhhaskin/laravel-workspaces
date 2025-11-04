@@ -114,7 +114,24 @@ return [
         'transfer-ownership' => [
             'roles' => ['workspace-owner'],
         ],
+        'manage-billing' => [
+            'roles' => ['workspace-owner'],
+        ],
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Billing Integration
+    |--------------------------------------------------------------------------
+    |
+    | If bhhaskin/laravel-billing is installed, you can use the WorkspaceBillable
+    | trait on your Workspace model to enable workspace-level billing. The
+    | billing_contact_id field allows you to designate a specific workspace
+    | member as the billing contact (defaults to owner).
+    |
+    | To enable: Add 'use WorkspaceBillable;' to your Workspace model.
+    |
+    */
 
     /*
     |--------------------------------------------------------------------------

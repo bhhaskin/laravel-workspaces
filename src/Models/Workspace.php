@@ -121,6 +121,11 @@ class Workspace extends Model
         return $this->belongsTo(WorkspaceConfig::userModel(), 'owner_id');
     }
 
+    public function billingContactRelation(): BelongsTo
+    {
+        return $this->belongsTo(WorkspaceConfig::userModel(), 'billing_contact_id');
+    }
+
     protected function membersRelation(): BelongsToMany
     {
         return $this->belongsToMany(
