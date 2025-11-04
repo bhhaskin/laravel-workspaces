@@ -60,7 +60,7 @@ final class Workspaces
     {
         $attributes = [
             'prefix' => $options['prefix'] ?? 'workspaces',
-            'middleware' => $options['middleware'] ?? null,
+            'middleware' => $options['middleware'] ?? ['auth:sanctum', 'throttle:api'],
             'as' => $options['name'] ?? 'workspaces.',
             'scope_bindings' => true,
         ];
@@ -76,7 +76,7 @@ final class Workspaces
     {
         $attributes = [
             'prefix' => $options['invitation_prefix'] ?? 'workspace-invitations',
-            'middleware' => $options['invitation_middleware'] ?? ($options['middleware'] ?? null),
+            'middleware' => $options['invitation_middleware'] ?? ($options['middleware'] ?? ['auth:sanctum', 'throttle:invitations']),
             'as' => $options['invitation_name'] ?? 'workspace-invitations.',
         ];
 

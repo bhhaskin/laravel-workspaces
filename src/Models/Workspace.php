@@ -26,7 +26,13 @@ use InvalidArgumentException;
 
 class Workspace extends Model
 {
-    protected $guarded = [];
+    protected $fillable = [
+        'name',
+        'slug',
+        'meta',
+        'owner_id',
+        'billing_contact_id',
+    ];
 
     protected $casts = [
         'uuid' => 'string',
@@ -71,34 +77,38 @@ class Workspace extends Model
     {
         $this->ensureUserModel($newOwner);
 
+        // Load the owner relationship to ensure we have the previous owner
+        $this->load('owner');
         $previousOwner = $this->owner;
 
         if ($previousOwner instanceof Model && $previousOwner->is($newOwner)) {
             return;
         }
 
-        $ownerRoleSlug = WorkspaceRoles::ownerRoleSlug();
+        DB::transaction(function () use ($newOwner, $previousOwner) {
+            $ownerRoleSlug = WorkspaceRoles::ownerRoleSlug();
 
-        $this->owner()->associate($newOwner);
-        $this->save();
+            $this->owner()->associate($newOwner);
+            $this->save();
 
-        if ($ownerRoleSlug) {
-            $this->addMember($newOwner, $ownerRoleSlug);
-        } else {
-            $this->addMember($newOwner, null);
-        }
+            if ($ownerRoleSlug) {
+                $this->addMember($newOwner, $ownerRoleSlug);
+            } else {
+                $this->addMember($newOwner, null);
+            }
 
-        if ($previousOwner instanceof Model && ! $previousOwner->is($newOwner)) {
-            $fallbackSlug = config('workspaces.roles.owner_fallback', WorkspaceRoles::defaultRoleSlug());
+            if ($previousOwner instanceof Model && ! $previousOwner->is($newOwner)) {
+                $fallbackSlug = config('workspaces.roles.owner_fallback', WorkspaceRoles::defaultRoleSlug());
 
-            if ($fallbackSlug) {
-                if ($this->isMember($previousOwner)) {
-                    $this->updateMemberRole($previousOwner, $fallbackSlug);
-                } else {
-                    $this->addMember($previousOwner, $fallbackSlug);
+                if ($fallbackSlug) {
+                    if ($this->isMember($previousOwner)) {
+                        $this->updateMemberRole($previousOwner, $fallbackSlug);
+                    } else {
+                        $this->addMember($previousOwner, $fallbackSlug);
+                    }
                 }
             }
-        }
+        });
 
         event(new WorkspaceOwnershipTransferred($this, $previousOwner, $newOwner));
     }
@@ -171,9 +181,15 @@ class Workspace extends Model
 
         $roleModel = WorkspaceRoles::resolve($role);
 
+        $wasMember = $this->isMember($user);
         $this->ensureMembership($user, true);
 
-        WorkspaceRoles::assignRoleTo($user, $this, $roleModel);
+        // If user was already a member, sync their role instead of adding to it
+        if ($wasMember) {
+            WorkspaceRoles::syncRoleFor($user, $this, $roleModel);
+        } else {
+            WorkspaceRoles::assignRoleTo($user, $this, $roleModel);
+        }
 
         event(new WorkspaceMemberAdded($this, $user, $roleModel));
     }
@@ -211,6 +227,7 @@ class Workspace extends Model
 
         $roleModel = WorkspaceRoles::resolve($role);
 
+        // Sync roles to replace existing workspace roles with the new one
         WorkspaceRoles::syncRoleFor($user, $this, $roleModel);
 
         event(new WorkspaceMemberRoleUpdated($this, $user, $roleModel));

@@ -6,6 +6,7 @@ namespace Bhhaskin\LaravelWorkspaces\Http\Requests;
 
 use Bhhaskin\LaravelWorkspaces\Models\Workspace;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateWorkspaceRequest extends FormRequest
 {
@@ -24,10 +25,20 @@ class UpdateWorkspaceRequest extends FormRequest
      */
     public function rules(): array
     {
+        $workspace = $this->route('workspace');
+        $table = config('workspaces.tables.workspaces', 'workspaces');
+
         return [
-            'name' => ['sometimes', 'string', 'max:255'],
-            'slug' => ['sometimes', 'nullable', 'string', 'max:255'],
-            'meta' => ['sometimes', 'nullable', 'array'],
+            'name' => ['sometimes', 'required', 'string', 'min:1', 'max:255', 'regex:/^(?!\s*$).+/'],
+            'slug' => [
+                'sometimes',
+                'nullable',
+                'string',
+                'max:255',
+                'regex:/^[a-z0-9\-]+$/',
+                Rule::unique($table, 'slug')->ignore($workspace instanceof Workspace ? $workspace->id : null),
+            ],
+            'meta' => ['sometimes', 'nullable', 'array', 'max:50'],
         ];
     }
 }

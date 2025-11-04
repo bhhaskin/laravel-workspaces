@@ -53,7 +53,7 @@ class WorkspaceInvitationController extends Controller
         $this->authorize('manageInvitations', $workspace);
 
         if (! $invitation->workspace || ! $invitation->workspace->is($workspace)) {
-            abort(404);
+            abort(403, 'This invitation does not belong to the workspace.');
         }
 
         $invitation->delete();
